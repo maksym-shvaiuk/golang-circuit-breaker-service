@@ -1,0 +1,187 @@
+openapi: 3.0.0
+info:
+  title: Circuit Breaker API
+  version: 1.0.0
+  description: A REST API for managing and reporting circuit breaker states for multiple devices.
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+paths:
+  /circuit-breaker/{deviceID}/config:
+    put:
+      summary: Update circuit breaker configuration
+      description: Updates thresholds or settings for a specific circuit breaker.
+      parameters:
+        - name: deviceID
+          in: path
+          required: true
+          description: Unique identifier of the device.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        description: Configuration details for the circuit breaker.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                errorsThreshold:
+                  type: integer
+                  description: Error threshold percentage to trip the circuit breaker.
+                  example: 50
+                errorsCntResetTimeoutMs:
+                  type: integer
+                  description: Timeout in milliseconds to clear the errors counter.
+                  example: 10000
+                resetTimeoutMs:
+                  type: integer
+                  description: Timeout in milliseconds before the circuit breaker resets.
+                  example: 60000
+      responses:
+        '200':
+          description: Configuration updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deviceID:
+                    type: string
+                    description: The device ID for which the configuration was updated.
+                  config:
+                    type: object
+                    properties:
+                      errorsThreshold:
+                        type: integer
+                      errorsCntResetTimeoutMs:
+                        type: integer
+                      resetTimeoutMs:
+                        type: integer
+        '400':
+          description: Invalid request payload.
+        '404':
+          description: Device ID not found.
+        '500':
+          description: Internal server error.
+  /circuit-breaker/{deviceID}/reset:
+    post:
+      summary: Reset circuit breaker
+      description: Manually resets the circuit breaker for a device to the CLOSED state.
+      parameters:
+        - name: deviceID
+          in: path
+          required: true
+          description: Unique identifier of the device.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Circuit breaker reset successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deviceID:
+                    type: string
+                    description: The device ID that was reset.
+                  newState:
+                    type: string
+                    description: The updated state of the circuit breaker.
+                    enum: [CLOSED]
+        '404':
+          description: Device ID not found.
+        '500':
+          description: Internal server error.
+  /circuit-breaker/{deviceID}/status:
+    get:
+      summary: Get circuit breaker status
+      description: Retrieves the current status of the circuit breaker for a specific device.
+      parameters:
+        - name: deviceID
+          in: path
+          required: true
+          description: Unique identifier of the device.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Circuit breaker status retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deviceID:
+                    type: string
+                    description: The device ID.
+                  state:
+                    type: string
+                    description: The current state of the circuit breaker.
+                    enum: [OPEN, CLOSED, HALF-OPEN]
+                  lastChanged:
+                    type: string
+                    format: date-time
+                    description: The last time the state was updated.
+        '404':
+          description: Device ID not found.
+        '500':
+          description: Internal server error.
+  /circuit-breakers/:
+    get:
+      summary: Retrieve all circuit breakers with pagination
+      description: Returns a paginated list of all circuit breakers and their current states.
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: The page number to retrieve.
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          description: The number of results to return per page.
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Paginated list of circuit breakers.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  page:
+                    type: integer
+                  pageSize:
+                    type: integer
+                  totalItems:
+                    type: integer
+                  totalPages:
+                    type: integer
+                  circuitBreakers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CircuitBreaker'
+        '500':
+          description: Internal server error.
+components:
+  schemas:
+    CircuitBreaker:
+      type: object
+      properties:
+        deviceID:
+          type: string
+          description: Unique identifier of the device.
+        state:
+          type: string
+          description: The state of the circuit breaker.
+          enum: [OPEN, CLOSED, HALF-OPEN]
+        lastChanged:
+          type: string
+          format: date-time
+          description: The last time the state was updated.
