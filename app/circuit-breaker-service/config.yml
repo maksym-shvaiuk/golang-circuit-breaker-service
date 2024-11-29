@@ -1,0 +1,22 @@
+---
+log_level: debug
+
+api:
+  server_host: 127.0.0.1
+  server_port: 8080
+  request_rw_timeout: 15s
+  idle_timeout: 60s
+  graceful_timeout: 15s
+  auth_key: "testapikey"
+
+db:
+  connection_url: "mongodb://localhost:27017"
+  database_name: "testdb"
+  default_page_size: 5
+
+service:
+  default_page_size: 5
+  default_errors_threshold: 10
+  default_reset_timeout_ms: 60000
+  default_errors_cnt_reset_timeout_ms: 10000
+
