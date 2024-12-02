@@ -64,6 +64,51 @@ paths:
           description: Device ID not found.
         '500':
           description: Internal server error.
+  /circuit-breaker/{deviceID}/report-failure:
+    post:
+      summary: Report a failed call
+      description: Increments the failure counter for the specified circuit breaker. If the failure threshold is exceeded, the circuit breaker state transitions to OPEN.
+      parameters:
+        - name: deviceID
+          in: path
+          required: true
+          description: The unique identifier of the circuit breaker.
+          schema:
+            type: integer
+      requestBody:
+        description: Details of the failure being reported.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                failureReason:
+                  type: string
+                  description: Optional reason for the failure (for logging or debugging).
+                  example: "Timeout while connecting to the service"
+      responses:
+        '200':
+          description: Failure reported successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deviceID:
+                    type: integer
+                    description: The ID of the circuit breaker.
+                  state:
+                    type: string
+                    description: The updated state of the circuit breaker.
+                    enum: [OPEN, CLOSED, HALF-OPEN]
+                    example: "OPEN"
+        '400':
+          description: Invalid request payload or device ID.
+        '404':
+          description: Circuit breaker not found.
+        '500':
+          description: Internal server error while reporting the failure.
   /circuit-breaker/{deviceID}/reset:
     post:
       summary: Reset circuit breaker
